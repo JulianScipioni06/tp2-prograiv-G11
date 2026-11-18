@@ -7,8 +7,8 @@ describe('GET /notes/:id', () => {
         const app = makeApp(':memory:');
 
         const createdRes = await request(app)
-        .post('/notes')
-        .send({ title: 'Test integración', content: 'Contenido de prueba' });
+            .post('/notes')
+            .send({ title: 'Test integración', content: 'Contenido de prueba' });
 
         const id = createdRes.body.id;
 
@@ -30,6 +30,34 @@ describe('GET /notes/:id', () => {
     });
 });
 
+describe('DELETE /notes/:id', () => {
+    it('debería devolver 204 al eliminar una nota existente', async () => {
+        const app = makeApp(':memory:');
+
+        const createdRes = await request(app)
+            .post('/notes')
+            .send({ title: 'Para eliminar', content: 'Chau nota' });
+
+        const id = createdRes.body.id;
+
+        const deleteRes = await request(app).delete(`/notes/${id}`);
+        expect(deleteRes.status).toBe(204);
+
+        // Verificamos que ya no exista
+        const getRes = await request(app).get(`/notes/${id}`);
+        expect(getRes.status).toBe(404);
+    });
+
+    it('debería devolver 404 cuando el id no existe', async () => {
+        const app = makeApp(':memory:');
+
+        const res = await request(app).delete('/notes/9999');
+
+        expect(res.status).toBe(404);
+        expect(res.body).toEqual({ error: 'NotFound' });
+    });
+});
+
 describe('PATCH /notes/:id', () => {
     let app: any;
 
@@ -45,7 +73,7 @@ describe('PATCH /notes/:id', () => {
                 content: 'Contenido original',
                 pinned: false
             });
-            
+
         const notaId = resPost.body.id;
 
         const resPatch = await request(app)
