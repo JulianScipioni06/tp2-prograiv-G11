@@ -16,16 +16,14 @@ export class NoteServiceImpl implements NoteService {
   constructor(private readonly repo: NoteRepository) {}
 
   createNote(data: NewNote): Note {
-    // 🔴 EJERCICIO 1 (dado en rojo en tests/unit/noteService.create.test.ts)
-    // Implementen la creación básica: crear la nota en el repositorio y
-    // devolverla. Con esto alcanza para que el test de la cátedra pase.
-    return this.repo.create(data);
-    // 🔴🟢 EJERCICIO 6 (a hacer más adelante, ustedes escriben el test):
-    // una vez que este método esté en verde, agréguenle: si `data.pinned`
-    // es true, además deben llamar a notify(nota) del módulo
-    // notificationService. En el test, simulen ese módulo completo con
-    // vi.mock y verifiquen la llamada con toHaveBeenCalledWith.
-    throw new Error('createNote: no implementado (Ejercicio 1)');
+  
+  const note = this.repo.create(data);
+
+  if (data.pinned) {
+    notify(note);
+  }
+
+  return note;
   }
 
   listNotes(): Note[] {
@@ -42,7 +40,23 @@ export class NoteServiceImpl implements NoteService {
   updateNote(id: number, patch: NotePatch): Note | undefined {
     // 🔴🟢 EJERCICIO 4: ciclo completo. Es una actualización PARCIAL:
     // si patch solo trae `title`, `content` no debe cambiar (y viceversa).
-    throw new Error('updateNote: no implementado (Ejercicio 4)');
+    
+    // buscamos si la nota existe
+    const notaExistente = this.repo.findById(id); 
+    
+    if (!notaExistente) {
+      return undefined;
+    }
+
+    // combinamos la nota actual con los datos del patch
+    const notaActualizada = {
+      ...notaExistente,
+      ...patch,
+      updatedAt: new Date().toISOString() 
+    };
+
+    // guardamos los cambios
+    return this.repo.update(id, notaActualizada);
   }
 
   deleteNote(id: number): boolean {
