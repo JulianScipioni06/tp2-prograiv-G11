@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import { makeApp } from '../../src/app';
 
@@ -6,7 +6,6 @@ describe('GET /notes/:id', () => {
     it('debería devolver 200 y la nota cuando existe', async () => {
         const app = makeApp(':memory:');
 
-        // Creamos una nota primero (requiere que createNote del Ejercicio 1 esté implementado)
         const createdRes = await request(app)
         .post('/notes')
         .send({ title: 'Test integración', content: 'Contenido de prueba' });
@@ -28,5 +27,46 @@ describe('GET /notes/:id', () => {
 
         expect(res.status).toBe(404);
         expect(res.body).toEqual({ error: 'NotFound' });
+    });
+});
+
+describe('PATCH /notes/:id', () => {
+    let app: any;
+
+    beforeEach(() => {
+        app = makeApp(':memory:');
+    });
+
+    it('Actualiza solo el titulo, Devuelve código 200 y la nota actualizada', async () => {
+        const resPost = await request(app)
+            .post('/notes')
+            .send({
+                title: 'Titulo original',
+                content: 'Contenido original',
+                pinned: false
+            });
+            
+        const notaId = resPost.body.id;
+
+        const resPatch = await request(app)
+            .patch(`/notes/${notaId}`)
+            .send({
+                title: 'Titulo nuevo'
+            });
+
+        expect(resPatch.status).toBe(200);
+        expect(resPatch.body.id).toBe(notaId);
+        expect(resPatch.body.title).toBe('Titulo nuevo');
+        expect(resPatch.body.content).toBe('Contenido original');
+    });
+
+    it('Devuelve codigo 404 si la nota no existe', async () => {
+        const resPatch = await request(app)
+            .patch('/notes/999')
+            .send({
+                title: 'Intento fallido'
+            });
+
+        expect(resPatch.status).toBe(404);
     });
 });
